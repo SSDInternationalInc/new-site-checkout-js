@@ -51,13 +51,8 @@ import CheckoutStepType from './CheckoutStepType';
 import CheckoutSupport from './CheckoutSupport';
 import mapToCheckoutProps from './mapToCheckoutProps';
 import navigateToOrderConfirmation from './navigateToOrderConfirmation';
-<<<<<<< HEAD
 import CustomShippingStep from '../fflShipping/CustomShippingStep';
 import CustomShippingSummary from '../fflShipping/customShippingSummary';
-=======
-import CustomShippingStep from '../CustomShippingStep';
-import CustomShippingSummary from '../customShippingSummary';
->>>>>>> c2229c5f (Add custom shipping step)
 
 const Billing = lazy(() =>
     retry(
@@ -428,11 +423,7 @@ class Checkout extends Component<
     }
 
     private renderShippingStep(step: CheckoutStepStatus): ReactNode {
-<<<<<<< HEAD
         const { cart, consignments = [] } = this.props;
-=======
-        const { hasCartChanged, cart, consignments = [], isShippingDiscountDisplayEnabled } = this.props;
->>>>>>> c2229c5f (Add custom shipping step)
 
         if (!cart) {
             return;
