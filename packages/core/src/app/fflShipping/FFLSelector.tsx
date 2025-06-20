@@ -2,21 +2,29 @@ import React, { useState, useRef, useEffect } from "react";
 import { FFL } from "./CustomShippingStep";
 import FFLSelectOption from "./FFLSelectOption";
 import "./FFLSelector.scss";
-import data from './locations.json';
 
 interface FFLSelectorProps {
     selectedFFL: FFL | null;
+    shootStraightLocations: FFL[];
     ffls: FFL[] | null;
     handleSelectFFL: (ffl: FFL) => void;
     pickupAtSS: boolean;
 }
 
-const shootStraightIds = data.shootStraightIds;
 
-const FFLSelector: React.FC<FFLSelectorProps> = ({ ffls, handleSelectFFL, selectedFFL, pickupAtSS }) => {
+const FFLSelector: React.FC<FFLSelectorProps> = ({ ffls, handleSelectFFL, selectedFFL, shootStraightLocations, pickupAtSS }) => {
     // Early return if ffls is null and pickupAtSS is false
     if (!pickupAtSS && ffls === null) {
         return <></>;
+    }
+
+    // Show message if ffls is an empty array (not null) and not pickupAtSS
+    if (!pickupAtSS && Array.isArray(ffls) && ffls.length === 0) {
+        return (
+            <div className="ffl-selector__no-results">
+                No FFLs matched your search. Please try again.
+            </div>
+        );
     }
 
     const [isOpen, setIsOpen] = useState(false);
@@ -29,8 +37,7 @@ const FFLSelector: React.FC<FFLSelectorProps> = ({ ffls, handleSelectFFL, select
         setIsOpen(false);
     };
 
-    // Filter shoot straight locations from ffls
-    const shootStraightLocations = (ffls || []).filter(ffl => shootStraightIds.includes(ffl.id));
+
 
     // Close dropdown on outside click
     useEffect(() => {
@@ -50,7 +57,7 @@ const FFLSelector: React.FC<FFLSelectorProps> = ({ ffls, handleSelectFFL, select
                 <h2 className="ffl-selector__selected">
                     {
                         selectedFFL
-                            ? selectedFFL.address.company
+                            ? selectedFFL.address.firstName
                             : (pickupAtSS ? "Select a Shoot Straight location" : "Select an FFL location")
                     }
                 </h2>
@@ -61,7 +68,7 @@ const FFLSelector: React.FC<FFLSelectorProps> = ({ ffls, handleSelectFFL, select
                 <div className="ffl-selector__options">
                     {(pickupAtSS ? shootStraightLocations : ffls || []).map((ffl) => (
                         <div
-                            key={ffl.address.company}
+                            key={ffl.id}
                             className="ffl-selector__option"
                             onClick={() => handleOptionClick(ffl)}
                         >

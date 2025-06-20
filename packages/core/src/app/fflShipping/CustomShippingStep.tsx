@@ -13,7 +13,6 @@ import {
 import { withCheckout } from '../checkout';
 import { CheckoutContextProps } from '@bigcommerce/checkout/payment-integration-api';
 
-import data from './locations.json';
 import './CustomShippingStep.scss';
 import PickupLocationSection from './PickupLocationSection';
 import CustomFFLSection from './CustomFFLSection';
@@ -23,7 +22,6 @@ import ContinueButtonSection from './ContinueButtonSection';
 
 export type FFL = {
   id: number;
-  name: string;
   address: Address;
 };
 
@@ -40,25 +38,6 @@ export interface WithCheckoutCustomShippingProps {
 interface CustomShippingProps {
   onContinue: () => void;
 }
-
-const shootStraightIds: number[] = data.shootStraightIds;
-
-const getFFLItemIDs = (cart: Cart) => {
-  const fflItems = [];
-  const homeItems = [];
-  const lineItems = cart.lineItems.physicalItems;
-  for (let i = 0; i < lineItems.length; i++) {
-    const category = lineItems[i].categoryNames?.[0] ?? '';
-    const id = lineItems[i].id ?? '';
-    const quantity = lineItems[i].quantity;
-    if (category === 'Firearms') {
-      fflItems.push({ itemId: id, quantity });
-    } else {
-      homeItems.push({ itemId: id, quantity });
-    }
-  }
-  return { fflitems: fflItems, homeItems };
-};
 
 const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingProps> = ({
   cart,
@@ -84,6 +63,8 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     stateOrProvince: '', stateOrProvinceCode: '', postalCode: '', country: '', countryCode: 'US',
     phone: '', customFields: [], shouldSaveAddress: false,
   });
+  const [shootStraightLocations, setShootStraightLocations] = useState<FFL[]>([]);
+  const [shootStraightIds, setShootStraightIds] = useState<number[]>([]);
 
   // Prefill home address if customer has saved addresses
   useEffect(() => {
@@ -108,6 +89,25 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     }
   }, [customer?.addresses]);
 
+  // Fetch Shoot Straight locations on mount
+  useEffect(() => {
+    const fetchShootStraightLocations = async () => {
+      try {
+        const response = await fetch('http://ffl.ssdinternationalinc.com/shootstraight');
+        if (!response.ok) throw new Error('Failed to fetch Shoot Straight locations');
+        const locations = await response.json();
+        setShootStraightLocations(locations);
+        // Extract and set the ids
+        setShootStraightIds(locations.map((loc: FFL) => Number(loc.id)));
+      } catch (error) {
+        console.error('Error fetching Shoot Straight locations:', error);
+        setShootStraightLocations([]);
+        setShootStraightIds([]);
+      }
+    };
+    fetchShootStraightLocations();
+  }, []);
+
   const hasFirearms = cart.lineItems.physicalItems.some(item =>
     item.categoryNames?.includes('Firearms')
   );
@@ -119,12 +119,28 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
 
 
   useEffect(() => {
-    setFFLLocations(data.fflLocations);
-  }, []);
-
-  useEffect(() => {
     lineItemAllocations.current = getFFLItemIDs(cart);
   }, [cart]);
+
+
+  interface FflSearchParams {
+    searchTerms: string;
+    state: string;
+  }
+
+  const getFfls = async (params: FflSearchParams) => {
+    try {
+      const response = await fetch(`http://ffl.ssdinternationalinc.com/search?term=${encodeURIComponent(params.searchTerms)}&state=${params.state}`);
+      if (!response.ok) throw new Error('Failed to fetch FFL locations');
+      const locations = await response.json();
+      setFFLLocations(locations);
+    } catch (error) {
+      console.error('Error fetching FFL locations:', error);
+      setFFLLocations([]);  
+    }
+
+
+  }
 
   // Utility: Get empty required fields for validation
   const getEmptyRequiredFields = ({
@@ -150,7 +166,6 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     const fflFields = [
       { label: 'FFL First Name', value: selectedFFL?.address?.firstName || '' },
       { label: 'FFL Last Name', value: selectedFFL?.address?.lastName || '' },
-      { label: 'FFL Company Name', value: selectedFFL?.name || '' },
       { label: 'FFL Address 1', value: selectedFFL?.address?.address1 || '' },
       { label: 'FFL City', value: selectedFFL?.address?.city || '' },
       { label: 'FFL State Code', value: selectedFFL?.address?.stateOrProvinceCode || '' },
@@ -190,7 +205,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     if (fflItems.length > 0 && selectedFFL) {
       const itemsToFFL = pickupAtSS ? [...fflItems, ...homeItems] : fflItems;
       consignments.push({
-        address: { ...selectedFFL.address, company: selectedFFL.name, customFields: [] },
+        address: { ...selectedFFL.address, customFields: [] },
         lineItems: itemsToFFL,
       });
     }
@@ -318,6 +333,8 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
         setPickupAtSS={setPickupAtSS}
         shootStraightIds={shootStraightIds}
         pickupAtSS={pickupAtSS}
+        shootStraightLocations={shootStraightLocations}
+        getFfls={getFfls}
       />
 
 
@@ -342,6 +359,24 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
       />
     </div>
   );
+};
+
+// Utility to get FFL and home item IDs from cart
+const getFFLItemIDs = (cart: Cart) => {
+  const fflItems = [];
+  const homeItems = [];
+  const lineItems = cart.lineItems.physicalItems;
+  for (let i = 0; i < lineItems.length; i++) {
+    const category = lineItems[i].categoryNames?.[0] ?? '';
+    const id = lineItems[i].id ?? '';
+    const quantity = lineItems[i].quantity;
+    if (category === 'Firearms') {
+      fflItems.push({ itemId: id, quantity });
+    } else {
+      homeItems.push({ itemId: id, quantity });
+    }
+  }
+  return { fflitems: fflItems, homeItems };
 };
 
 export function mapToShippingProps({
