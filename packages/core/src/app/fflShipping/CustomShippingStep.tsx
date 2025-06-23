@@ -93,7 +93,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
   useEffect(() => {
     const fetchShootStraightLocations = async () => {
       try {
-        const response = await fetch('http://ffl.ssdinternationalinc.com/shootstraight');
+        const response = await fetch('https://ffl.ssdinternationalinc.com/shootstraight');
         if (!response.ok) throw new Error('Failed to fetch Shoot Straight locations');
         const locations = await response.json();
         setShootStraightLocations(locations);
@@ -130,7 +130,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
 
   const getFfls = async (params: FflSearchParams) => {
     try {
-      const response = await fetch(`http://ffl.ssdinternationalinc.com/search?term=${encodeURIComponent(params.searchTerms)}&state=${params.state}`);
+      const response = await fetch(`https://ffl.ssdinternationalinc.com/search?term=${encodeURIComponent(params.searchTerms)}&state=${params.state}`);
       if (!response.ok) throw new Error('Failed to fetch FFL locations');
       const locations = await response.json();
       setFFLLocations(locations);
