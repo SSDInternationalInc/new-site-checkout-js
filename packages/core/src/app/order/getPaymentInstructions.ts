@@ -13,7 +13,7 @@ function isDefaultOrderPayment(payment: OrderPayment): payment is GatewayOrderPa
 
 function getPaymentInstructions(order: Order): string {
     const gatewayPayment = (order.payments || []).find(isDefaultOrderPayment);
-    const instructions = gatewayPayment && gatewayPayment.detail.instructions;
+    const instructions = gatewayPayment && gatewayPayment.detail.instructions ;
 
     return instructions || '';
 }
