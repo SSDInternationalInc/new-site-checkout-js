@@ -112,6 +112,10 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     item.categoryNames?.includes('Firearms')
   );
 
+  const hasNonFirearms = cart.lineItems.physicalItems.some(item =>
+    !item.categoryNames?.includes('Firearms')
+  );
+
   const showManualAddressInputs = cart.lineItems.physicalItems.some(
     item => !item.categoryNames?.includes('Firearms')
   ) && !pickupAtSS;
@@ -136,7 +140,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
       setFFLLocations(locations);
     } catch (error) {
       console.error('Error fetching FFL locations:', error);
-      setFFLLocations([]);  
+      setFFLLocations([]);
     }
 
 
@@ -145,6 +149,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
   // Utility: Get empty required fields for validation
   const getEmptyRequiredFields = ({
     hasFirearms,
+    hasNonFirearms,
     pickupAtSS,
     customFFL,
     customFFLData,
@@ -152,6 +157,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     homeAddress,
   }: {
     hasFirearms: boolean;
+    hasNonFirearms: boolean;
     pickupAtSS: boolean;
     customFFL: boolean;
     customFFLData: any;
@@ -180,7 +186,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
       { label: 'Home Postal Code', value: homeAddress?.postalCode },
     ];
     if (hasFirearms) requiredFields.push(...fflFields);
-    if (!pickupAtSS) requiredFields.push(...homeFields);
+    if (!pickupAtSS && hasNonFirearms) requiredFields.push(...homeFields);
     if (customFFL) requiredFields.push(...customFFLFields);
     return requiredFields.filter(field => !field.value.trim());
   };
@@ -191,7 +197,6 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     selectedFFL,
     homeAddress,
     lineItemAllocations,
-    hasFirearms,
   }: {
     pickupAtSS: boolean;
     selectedFFL: FFL | null;
@@ -202,19 +207,26 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     const consignments: ConsignmentCreateRequestBody[] = [];
     const fflItems = lineItemAllocations.current?.fflitems ?? [];
     const homeItems = lineItemAllocations.current?.homeItems ?? [];
-    if (fflItems.length > 0 && selectedFFL) {
-      const itemsToFFL = pickupAtSS ? [...fflItems, ...homeItems] : fflItems;
+    if (fflItems.length > 0 && selectedFFL && !pickupAtSS) {
       consignments.push({
         address: { ...selectedFFL.address, customFields: [] },
-        lineItems: itemsToFFL,
+        lineItems: fflItems,
       });
     }
-    if (homeItems.length > 0 && (!pickupAtSS || !hasFirearms)) {
+    if (homeItems.length > 0 && !pickupAtSS) {
       consignments.push({
         address: { ...homeAddress, customFields: homeAddress.customFields || [] },
         lineItems: homeItems,
       });
     }
+    if (pickupAtSS && selectedFFL) {
+      const itemsToFFL = [...fflItems, ...homeItems];
+      consignments.push({
+        address: { ...selectedFFL.address, customFields: [] },
+        lineItems: itemsToFFL,
+      });
+    }
+
     return consignments;
   };
 
@@ -236,7 +248,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
       );
 
       const shipAmmoOptionId = consignment.availableShippingOptions?.find(
-        (option) => option.description === "Ship Ammo"
+        (option) => option.description === "Ship to Home"
       )?.id;
 
       const pickupAtSSOptionId = consignment.availableShippingOptions?.find(
@@ -266,12 +278,14 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
   const handleContinue = async () => {
     const emptyFields = getEmptyRequiredFields({
       hasFirearms,
+      hasNonFirearms,
       pickupAtSS,
       customFFL,
       customFFLData,
       selectedFFL,
       homeAddress,
     });
+    console.log(emptyFields);
     if (emptyFields.length > 0) {
       setValidationError(true);
       return;

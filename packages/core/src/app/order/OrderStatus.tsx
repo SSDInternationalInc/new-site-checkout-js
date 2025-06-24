@@ -48,6 +48,8 @@ const OrderStatus: FunctionComponent<OrderStatusProps> = ({
                     supportPhoneNumber={supportPhoneNumber}
                 />
             </p>
+            <p><strong>Do not forget to reply to your order confirmation email with your qualifying credential and valid government ID (if applicable). Your order will not be processed until we receive the required proofs of eligibility.</strong></p>
+
             <PaymentsWithMandates
                 paymentsWithMandates={paymentsWithMandates}
             />

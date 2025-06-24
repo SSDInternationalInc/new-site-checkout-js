@@ -15,6 +15,7 @@ const FFLSelectorSection: React.FC<{
 }> = ({ show, fflLocations, selectedFFL, setSelectedFFL, setPickupAtSS, getFfls, shootStraightLocations, shootStraightIds, pickupAtSS }) => {
   const [input, setInput] = useState('');
   const [selectedState, setSelectedState] = useState('');
+  const [notice, setNotice] = useState('');
 
   const stateOptions = [
     '', 'AL', 'AZ', 'AR', 'DE', 'FL', 'GA', 'ID', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME',
@@ -34,6 +35,11 @@ const FFLSelectorSection: React.FC<{
   };
 
   const handleGetFfls = () => {
+    if (!selectedState) {
+      setNotice('You must select a state');
+      return;
+    }
+    setNotice('');
     getFfls({ searchTerms: input, state: selectedState });
   }
 
@@ -41,12 +47,13 @@ const FFLSelectorSection: React.FC<{
     <>
       {!pickupAtSS && (
         <div className="ffl-search-container">
+
           <input
             className="ffl-search-input"
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Enter FFL name, city, or zip"
+            placeholder="Enter FFL name, address, zip, or city"
           />
           <select
             className="ffl-search-input"
@@ -67,6 +74,9 @@ const FFLSelectorSection: React.FC<{
             Search
           </button>
         </div>
+      )}
+      {notice && (
+        <div style={{ color: 'red', marginBottom: 8 }}>{notice}</div>
       )}
       <FFLSelector
         ffls={fflLocations}
