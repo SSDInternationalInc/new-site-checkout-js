@@ -8,7 +8,7 @@ const CustomFFLSection: React.FC<{
   setCustomFFLData: React.Dispatch<any>;
   setSelectedFFL: React.Dispatch<React.SetStateAction<any>>;
 }> = ({ customFFL, setCustomFFL, customFFLData, setCustomFFLData, setSelectedFFL }) => {
-  const handleCustomFFLInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCustomFFLInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setCustomFFLData((prev: any) => ({ ...prev, [name]: value }));
     if (name === 'company') {
@@ -26,6 +26,12 @@ const CustomFFLSection: React.FC<{
         address: { ...prev.address, phone: value }
       } : null);
     }
+    if (name === 'state') {
+      setSelectedFFL((prev: any) => prev ? {
+        ...prev,
+        address: { ...prev.address, stateOrProvinceCode: value }
+      } : null);
+    }
   };
   const handleCheckCustomFFL = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const isChecked = e.target.checked;
@@ -34,9 +40,9 @@ const CustomFFLSection: React.FC<{
         id: 0,
         name: customFFLData.company,
         address: {
-          firstName: '-', lastName: '-', address1: '-', city: '-', stateOrProvinceCode: 'FL',
+          firstName: '-', lastName: '-', address1: '-', city: '-', stateOrProvinceCode: customFFLData.state,
           postalCode: '-', country: '-', company: '_', address2: '-', stateOrProvince: '',
-          countryCode: 'US', phone: '_', customFields: []
+          countryCode: 'US', phone: customFFLData.phone, customFields: []
         }
       });
       setCustomFFL(isChecked);
