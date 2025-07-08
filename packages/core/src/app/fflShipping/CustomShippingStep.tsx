@@ -57,7 +57,7 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
   const [pickupAtSS, setPickupAtSS] = useState<boolean>(true);
   const [fflLocations, setFFLLocations] = useState<FFL[] | null>(null);
   const [customFFL, setCustomFFL] = useState<boolean>(false);
-  const [customFFLData, setCustomFFLData] = useState<any>({ company: '', phone: '' });
+  const [customFFLData, setCustomFFLData] = useState<any>({ company: '', phone: '', state: '' });
   const [homeAddress, setHomeAddress] = useState<Address>({
     firstName: '', lastName: '', company: '', address1: '', address2: '', city: '',
     stateOrProvince: '', stateOrProvinceCode: '', postalCode: '', country: '', countryCode: 'US',
@@ -168,6 +168,8 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     const customFFLFields = [
       { label: 'FFL Business Name', value: customFFLData.company || '' },
       { label: 'FFL Phone Number', value: customFFLData.phone || '' },
+      { label: 'FFL State', value: customFFLData.state || '' },
+
     ];
     const fflFields = [
       { label: 'FFL First Name', value: selectedFFL?.address?.firstName || '' },
@@ -230,7 +232,6 @@ const CustomShipping: React.FC<WithCheckoutCustomShippingProps & CustomShippingP
     return consignments;
   };
 
-  // Utility: Select shipping options for consignments
   const selectShippingOptionsForConsignments = async ({
     consignments,
     pickupAtSS,
